@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongo-simple-app
+  namespace: mongo-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongo-simple-app
+  template:
+    metadata:
+      labels:
+        app: mongo-simple-app
+    spec:
+      containers:
+        - name: mongo-simple-app
+          image: your-dockerhub-username/mongo-simple-app:latest
+          ports:
+            - containerPort: 3000
+          env:
+            - name: MONGO_URL
+              value: mongodb://root:example@mongo:27017
+            - name: DB_NAME
+              value: testdb
+            - name: COLLECTION
+              value: users
