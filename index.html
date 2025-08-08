@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>MongoDB Users — Demo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#0b1020; --card:#111731; --muted:#a6b0cf; --text:#e6e9f5;
+      --brand1:#6f8cff; --brand2:#8aebff; --ok:#39d98a; --err:#ff6b6b;
+      --border:rgba(255,255,255,.08); --shadow:0 10px 30px rgba(0,0,0,.35);
+      --radius:14px;
+    }
+    *{box-sizing:border-box} html,body{height:100%}
+    body{margin:0; padding:0; font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      color:var(--text); background: radial-gradient(1200px 800px at -10% -10%, rgba(111,140,255,.25), transparent 60%), radial-gradient(1000px 700px at 110% 10%, rgba(138,235,255,.18), transparent 60%), radial-gradient(700px 500px at 50% 120%, rgba(111,140,255,.12), transparent 60%), var(--bg);
+    }
+    .wrap{max-width:980px; margin:0 auto; padding:32px 18px 120px}
+    .hero{padding:28px 22px; border:1px solid var(--border); background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02)); backdrop-filter:saturate(140%) blur(6px); border-radius:var(--radius); box-shadow:var(--shadow)}
+    h1{margin:0 0 8px; font-size:28px; font-weight:800}
+    .sub{margin:0; color:var(--muted)}
+    .row{display:grid; grid-template-columns:1fr 1fr auto; gap:12px; margin-top:18px}
+    label{font-size:12px; color:var(--muted)}
+    input{width:100%; margin-top:6px; padding:12px; background:#0e1430; color:var(--text); border:1px solid var(--border); border-radius:10px; outline:none}
+    input:focus{border-color:rgba(111,140,255,.6)}
+    button{align-self:end; padding:12px 16px; border-radius:10px; border:1px solid rgba(255,255,255,.1); background:linear-gradient(135deg, var(--brand1), #546dff); color:#fff; font-weight:600; cursor:pointer}
+    button:disabled{opacity:.6; cursor:not-allowed}
+    .status{min-height:22px; margin-top:10px; font-size:13px; color:var(--muted)}
+    .status.ok{color:var(--ok)} .status.err{color:var(--err)}
+    .card{margin-top:20px; padding:18px; border:1px solid var(--border); border-radius:var(--radius); background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.015)); box-shadow:var(--shadow)}
+    table{width:100%; border-collapse:separate; border-spacing:0; border-radius:12px; border:1px solid var(--border)}
+    thead th{font-size:12px; text-transform:uppercase; letter-spacing:.06em; font-weight:700; background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02)); color:#cfd6f6; text-align:left; padding:12px}
+    tbody td{padding:12px; border-top:1px solid var(--border)} tbody tr:hover{background:rgba(111,140,255,.06)}
+    .footer{position:fixed; left:0; right:0; bottom:0; padding:14px 18px; background:linear-gradient(180deg, rgba(0,0,0,0), rgba(0,0,0,.35)); backdrop-filter:saturate(140%) blur(6px); border-top:1px solid var(--border)}
+    .footwrap{max-width:980px; margin:0 auto; display:flex; align-items:center; gap:10px; color:var(--muted); font-size:13px}
+    .badge{display:inline-block; padding:6px 10px; border-radius:999px; background:linear-gradient(135deg, var(--brand2), var(--brand1)); color:#0b1020; font-weight:700; font-size:12px}
+    .links{margin-left:auto; display:flex; gap:14px}
+    .links a{color:#cfe4ff; text-decoration:none} .links a:hover{text-decoration:underline}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="hero">
+      <h1>Users · MongoDB Demo</h1>
+      <p class="sub">Add users via the form. Data is written to MongoDB and viewable in <strong>Mongo Express</strong>.</p>
+      <form id="user-form" class="row" autocomplete="off">
+        <div><label>Name<input id="name" name="name" placeholder="e.g. Ada Lovelace" required minlength="2" /></label></div>
+        <div><label>Email<input id="email" name="email" type="email" placeholder="e.g. ada@example.com" required /></label></div>
+        <button id="submit-btn" type="submit">Add User</button>
+      </form>
+      <div id="status" class="status"></div>
+    </div>
+    <div class="card">
+      <h2>Directory</h2>
+      <table id="users-table"><thead><tr><th>Name</th><th>Email</th><th>Created</th></tr></thead><tbody></tbody></table>
+    </div>
+  </div>
+  <footer class="footer"><div class="footwrap"><span class="badge">DevOps Academy</span><span>Hands-on Docker · Compose · MongoDB</span></div></footer>
+  <script>
+    const statusEl=document.getElementById('status'),form=document.getElementById('user-form'),submitBtn=document.getElementById('submit-btn'),nameEl=document.getElementById('name'),emailEl=document.getElementById('email'),tbody=document.querySelector('#users-table tbody');
+    function setStatus(msg,type){statusEl.textContent=msg||'';statusEl.className='status '+(type||'');}
+    function escapeHtml(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));}
+    async function loadUsers(){try{const res=await fetch('/api/users');const users=await res.json();tbody.innerHTML='';users.forEach(u=>{const created=u.createdAt?new Date(u.createdAt).toLocaleString():'';tbody.insertAdjacentHTML('beforeend',`<tr><td>${escapeHtml(u.name)}</td><td>${escapeHtml(u.email)}</td><td>${escapeHtml(created)}</td></tr>`);});}catch(e){console.error(e);setStatus('Failed to load users','err');}}
+    form.addEventListener('submit',async e=>{e.preventDefault();const name=nameEl.value.trim(),email=emailEl.value.trim();if(!name||!email){setStatus('Both fields required','err');return;}submitBtn.disabled=!0;setStatus('Saving…');try{const res=await fetch('/api/users',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,email})});if(!res.ok){const err=await res.json().catch(()=>({}));throw new Error(err.error||`HTTP ${res.status}`);}setStatus('Saved ✓','ok');nameEl.value='';emailEl.value='';await loadUsers();setTimeout(()=>setStatus(''),1200);}catch(err){console.error(err);setStatus('Save failed: '+err.message,'err');}finally{submitBtn.disabled=!1;}});
+    loadUsers();setInterval(loadUsers,3000);
+  </script>
+</body>
+</html>
