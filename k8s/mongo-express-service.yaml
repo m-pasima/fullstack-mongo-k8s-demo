@@ -1,13 +1,18 @@
+# mongo-express-service.yaml
 apiVersion: v1
 kind: Service
 metadata:
   name: mongo-express
   namespace: mongo-demo
+  labels:
+    app: mongo-express
 spec:
-  type: NodePort
   selector:
     app: mongo-express
   ports:
-    - port: 8081
-      targetPort: 8081
-      nodePort: 30081
+  - name: http
+    port: 8081
+    targetPort: 8081
+    nodePort: 30081
+    protocol: TCP
+  type: NodePort
