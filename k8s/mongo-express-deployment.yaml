@@ -1,8 +1,11 @@
+# mongo-express-deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: mongo-express
   namespace: mongo-demo
+  labels:
+    app: mongo-express
 spec:
   replicas: 1
   selector:
@@ -14,14 +17,36 @@ spec:
         app: mongo-express
     spec:
       containers:
-        - name: mongo-express
-          image: mongo-express:1.0.2-20
-          ports:
-            - containerPort: 8081
-          env:
-            - name: ME_CONFIG_MONGODB_ADMINUSERNAME
-              value: root
-            - name: ME_CONFIG_MONGODB_ADMINPASSWORD
-              value: example
-            - name: ME_CONFIG_MONGODB_SERVER
-              value: mongo
+      - name: mongo-express
+        image: mongo-express:1.0.2-20
+        ports:
+        - containerPort: 8081
+        env:
+        - name: ME_CONFIG_MONGODB_URL
+          value: mongodb://root:example@mongo:27017/?authSource=admin
+        - name: ME_CONFIG_MONGODB_ENABLE_ADMIN
+          value: "true"
+        - name: ME_CONFIG_BASICAUTH_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: mongo-express-auth
+              key: ME_CONFIG_BASICAUTH_USERNAME
+        - name: ME_CONFIG_BASICAUTH_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mongo-express-auth
+              key: ME_CONFIG_BASICAUTH_PASSWORD
+        readinessProbe:
+          tcpSocket:
+            port: 8081
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 2
+          failureThreshold: 3
+        livenessProbe:
+          tcpSocket:
+            port: 8081
+          initialDelaySeconds: 15
+          periodSeconds: 20
+          timeoutSeconds: 2
+          failureThreshold: 3
